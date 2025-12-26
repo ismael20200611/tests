@@ -1,0 +1,5 @@
+{
+  "name": "QuickBite POS & Ordering System",
+  "description": "A comprehensive fast-food ordering system featuring category filtering, cart management, dine-in/take-away modes, and admin history tracking with multi-channel order sharing.",
+  "requestFramePermissions": []
+}

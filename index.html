@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickBite POS - Bootstrap 5 Edition</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --sidebar-width: 120px;
+      --cart-width: 400px;
+    }
+    body {
+      height: 100vh;
+      overflow: hidden;
+      background-color: #f8f9fa;
+    }
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .content-area {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    /* Part D Styling */
+    .category-sidebar {
+      width: var(--sidebar-width);
+      background: #0d6efd;
+      overflow-y: auto;
+      border-right: 1px solid #0a58ca;
+    }
+    .category-btn {
+      width: 100%;
+      padding: 20px 10px;
+      color: white;
+      border: none;
+      background: transparent;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-transform: uppercase;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .category-btn:hover, .category-btn.active {
+      background: #0a58ca;
+    }
+    /* Part K Styling */
+    .item-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #e9ecef;
+    }
+    .menu-card {
+      height: 100%;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .menu-card:hover {
+      transform: translateY(-3px);
+    }
+    .menu-card img {
+      height: 150px;
+      object-fit: cover;
+    }
+    /* Part E Styling */
+    .cart-sidebar {
+      width: var(--cart-width);
+      background: #fff3cd;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #ffeeba;
+    }
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    /* Google Translate cleanup */
+    .goog-te-banner-frame.skiptranslate { display: none !important; }
+    body { top: 0px !important; }
+    .goog-te-gadget-simple {
+      padding: 4px !important;
+      border-radius: 4px !important;
+    }
+    /* Printing */
+    @media print {
+      .main-wrapper > *:not(.cart-sidebar) { display: none !important; }
+      .cart-sidebar { width: 100%; border: none; }
+      .btn { display: none !important; }
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+      "react/": "https://esm.sh/react@^19.2.3/",
+      "react": "https://esm.sh/react@^19.2.3",
+      "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    }
+  }
+  </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
