@@ -1,3 +1,4 @@
+
 export const CATEGORIES = ['All', 'Shawarma', 'Pizza', 'Grill', 'Platter', 'Sides', 'Drinks'];
 
 export const MENU_ITEMS = [
@@ -20,5 +21,5 @@ export const MENU_ITEMS = [
 
 export const TABLES = Array.from({ length: 30 }, (_, i) => `T${i + 1}`);
 export const USERS = ['user1', 'user2', 'user3', 'admin'];
-export const CONTACT_NUMBER = '+96877611327';
+export const CONTACT_NUMBER = '+447400123456';
 export const COMPANY_EMAIL = 'fastfood@gmail.com';
