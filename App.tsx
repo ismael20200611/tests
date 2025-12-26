@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CATEGORIES, MENU_ITEMS, TABLES, USERS, CONTACT_NUMBER, COMPANY_EMAIL } from './constants';
 
 interface CartItem {
-  id: number;
+  id: string | number;
   name: string;
   price: number;
   quantity: number;
@@ -16,14 +16,11 @@ const App: React.FC = () => {
   const [orderType, setOrderType] = useState<'Take-away' | 'Dine-in'>('Dine-in');
   const [time, setTime] = useState(new Date());
   
-  // Tax and Service Charge States
   const [vatRate, setVatRate] = useState<number>(0);
   const [serviceRate, setServiceRate] = useState<number>(0);
-  const [vipRate, setVipRate] = useState<number>(10);
+  const [vipRate] = useState<number>(10);
   
-  // Dine-in states
-  const [dineIn, setDineIn] = useState({ customer: '', user: 'user0', table: 'table0', vip: 0 });
-  // Take-away states
+  const [dineIn, setDineIn] = useState({ customer: '', user: 'user1', table: 'T1', vip: 0 });
   const [takeaway, setTakeaway] = useState({ 
     name: '', 
     lastName: '', 
@@ -51,17 +48,6 @@ const App: React.FC = () => {
     });
   }, [category, search]);
 
-  // Fix syntax error on line 59 by correctly handling ternary expression in array literal
-  const addToCart = (item: any) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      // Fixed: Removed incorrect object wrapping around ternary and corrected property spreading
-      return [...prev, (item as any).img ? {id: item.id, name: item.name, price: item.price, quantity: 1} : { ...item, quantity: 1 }];
-    });
-  };
-
-  // Fixed specific bug for provided constants structure
   const handleAddToCart = (item: any) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
@@ -70,13 +56,12 @@ const App: React.FC = () => {
     });
   };
 
-  const updateQty = (id: number, delta: number) => {
+  const updateQty = (id: string | number, delta: number) => {
     setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i));
   };
 
-  const removeFromCart = (id: number) => setCart(prev => prev.filter(i => i.id !== id));
+  const removeFromCart = (id: string | number) => setCart(prev => prev.filter(i => i.id !== id));
 
-  // Dynamic Calculations - Only apply VAT/Service if Dine-in
   const subtotal = cart.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
   const vatAmount = orderType === 'Dine-in' ? subtotal * (vatRate / 100) : 0;
   const serviceAmount = orderType === 'Dine-in' ? subtotal * (serviceRate / 100) : 0;
@@ -98,11 +83,11 @@ const App: React.FC = () => {
   };
 
   const formatOrderMessage = (orderId: number) => {
-    let msg = `🍔 *QUICKBITE ORDER TICKET*\n`;
+    let msg = `🍔 *QUICKBITE UK ORDER TICKET*\n`;
     msg += `------------------------------\n`;
     msg += `🎟️ Order ID: ${orderId}\n`;
-    msg += `📅 Ordered On: ${time.toLocaleDateString()}\n`;
-    msg += `⏰ Ordered At: ${time.toLocaleTimeString('en-GB', { timeZone: 'Europe/London' })}\n`;
+    msg += `📅 Date: ${time.toLocaleDateString('en-GB', { timeZone: 'Europe/London' })}\n`;
+    msg += `⏰ Time: ${time.toLocaleTimeString('en-GB', { timeZone: 'Europe/London' })}\n`;
     
     if (orderType === 'Take-away' && takeaway.bookingDate) {
       msg += `📢 *BOOKING SCHEDULE:*\n`;
@@ -116,40 +101,37 @@ const App: React.FC = () => {
       msg += `📍 Address: ${takeaway.address}\n`;
       msg += `📞 Phone: ${takeaway.phone}\n`;
     } else {
-      msg += `🪑 Table: ${dineIn.table} | 👤 User: ${dineIn.user}\n`;
+      msg += `🪑 Table: ${dineIn.table} | 👤 Staff: ${dineIn.user}\n`;
       msg += `👥 VIP Guests: ${dineIn.vip}\n`;
     }
     msg += `------------------------------\n`;
     msg += `📝 *ITEMS:*\n`;
     cart.forEach(i => {
-      msg += `• ${i.name} [x${i.quantity}] - $${(i.price * i.quantity).toFixed(2)}\n`;
+      msg += `• ${i.name} [x${i.quantity}] - £${(i.price * i.quantity).toFixed(2)}\n`;
     });
     msg += `------------------------------\n`;
-    msg += `💵 Subtotal: $${subtotal.toFixed(2)}\n`;
+    msg += `💵 Subtotal: £${subtotal.toFixed(2)}\n`;
     if (orderType === 'Dine-in') {
-      if (vatRate > 0) msg += `⚖️ VAT (${vatRate}%): $${vatAmount.toFixed(2)}\n`;
-      if (serviceRate > 0) msg += `🛎️ Service (${serviceRate}%): $${serviceAmount.toFixed(2)}\n`;
-      if (vipCharge > 0) msg += `💎 VIP Charge: $${vipCharge.toFixed(2)}\n`;
+      if (vatRate > 0) msg += `⚖️ VAT (${vatRate}%): £${vatAmount.toFixed(2)}\n`;
+      if (serviceRate > 0) msg += `🛎️ Service (${serviceRate}%): £${serviceAmount.toFixed(2)}\n`;
+      if (vipCharge > 0) msg += `💎 VIP Charge: £${vipCharge.toFixed(2)}\n`;
     }
-    msg += `💰 *TOTAL: $${grandTotal.toFixed(2)}*\n`;
+    msg += `💰 *TOTAL: £${grandTotal.toFixed(2)}*\n`;
     msg += `------------------------------\n`;
-    msg += `✅ *Fastfood Verification Code: ${Math.floor(1000 + Math.random() * 9000)}*`;
+    msg += `✅ *Verification Code: ${Math.floor(1000 + Math.random() * 9000)}*`;
     return msg;
   };
 
   const handleShare = (platform: 'wa' | 'tg' | 'vb' | 'email') => {
-    const encoded = encodeURIComponent(currentOrderMessage);
+    const orderId = Date.now();
+    const message = formatOrderMessage(orderId);
+    const encoded = encodeURIComponent(message);
     const cleanNum = CONTACT_NUMBER.replace(/\+/g, '');
 
-    if (platform === 'wa') {
-      window.open(`https://wa.me/${cleanNum}?text=${encoded}`, '_blank');
-    } else if (platform === 'tg') {
-      window.open(`https://t.me/share/url?url=${encoded}`, '_blank');
-    } else if (platform === 'vb') {
-      window.open(`viber://forward?text=${encoded}`, '_blank');
-    } else if (platform === 'email') {
-      window.open(`mailto:${COMPANY_EMAIL}?subject=QuickBite Order Ticket&body=${encoded}`, '_blank');
-    }
+    if (platform === 'wa') window.open(`https://wa.me/${cleanNum}?text=${encoded}`, '_blank');
+    else if (platform === 'tg') window.open(`https://t.me/share/url?url=${encoded}`, '_blank');
+    else if (platform === 'vb') window.open(`viber://forward?text=${encoded}`, '_blank');
+    else if (platform === 'email') window.open(`mailto:${COMPANY_EMAIL}?subject=QuickBite Order ${orderId}&body=${encoded}`, '_blank');
     
     setShowAppSelector(false);
     setCart([]);
@@ -158,16 +140,15 @@ const App: React.FC = () => {
 
   const placeOrder = () => {
     if (cart.length === 0) return alert('Cart is empty!');
-
     const orderId = Date.now();
     const orderData = {
       id: orderId,
       time: time.toLocaleTimeString('en-GB', { timeZone: 'Europe/London' }),
-      date: time.toLocaleDateString(),
-      items: cart,
+      date: time.toLocaleDateString('en-GB', { timeZone: 'Europe/London' }),
+      items: [...cart],
       total: grandTotal,
       type: orderType,
-      details: orderType === 'Dine-in' ? dineIn : takeaway
+      details: orderType === 'Dine-in' ? {...dineIn} : {...takeaway}
     };
 
     setHistory(prev => [orderData, ...prev].slice(0, 10000));
@@ -178,60 +159,56 @@ const App: React.FC = () => {
       setShowAppSelector(true);
     } else {
       window.print();
-      alert('Order placed successfully! Printing ticket...');
+      alert('Dine-in Order Registered! Printing receipt...');
       setCart([]);
     }
   };
 
-  const downloadCSV = () => {
-    const headers = "ID,Date,Time,Type,Total\n";
-    // Fixed: explicitly refer to local 'history' state to avoid conflict with global window.history
-    const rows = history.map(h => `${h.id},${h.date},${h.time},${h.type},${h.total}`).join('\n');
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'order_history.csv';
-    link.click();
-    URL.revokeObjectURL(url);
+  const getCategoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'All': return 'bi-grid-fill';
+      case 'Shawarma': return 'bi-fire';
+      case 'Pizza': return 'bi-pie-chart-fill';
+      case 'Grill': return 'bi-thermometer-sun';
+      case 'Platter': return 'bi-collection-fill';
+      case 'Sides': return 'bi-box-seam-fill';
+      case 'Drinks': return 'bi-cup-straw';
+      default: return 'bi-lightning-fill';
+    }
   };
 
   return (
     <div className="main-wrapper">
-      <div className="bg-dark text-white text-center py-2 fw-bold text-uppercase shadow-sm">
-        QuickBite FastFood & Restaurant
+      <div className="bg-dark text-white text-center py-2 fw-bold text-uppercase small shadow-sm" style={{ height: 'var(--brand-height)' }}>
+        <i className="bi bi-shop text-warning me-2"></i>
+        QuickBite POS System v2.1 (UK Edition)
       </div>
 
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow-sm">
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow-sm" style={{ height: 'var(--nav-height)' }}>
         <div className="container-fluid">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item"><a className="nav-link active" href="#">Home</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">About</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">Staff</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">Content</a></li>
-          </ul>
+          <span className="navbar-brand fw-black"><i className="bi bi-lightning-charge-fill me-2 text-warning"></i>QUICKBITE UK</span>
           <div className="d-flex align-items-center gap-3">
-            <div id="google_translate_element" className="translate-widget"></div>
-            <button onClick={toggleFullscreen} className="btn btn-outline-light btn-sm">
+            <div id="google_translate_element"></div>
+            <button onClick={toggleFullscreen} className="btn btn-outline-light btn-sm rounded-circle shadow-sm">
               <i className="bi bi-arrows-fullscreen"></i>
             </button>
           </div>
         </div>
       </nav>
 
-      <div className="bg-white border-bottom p-2 d-flex flex-wrap gap-2 align-items-center shadow-sm">
-        <button className="btn btn-light border"><i className="bi bi-house"></i></button>
-        <button className="btn btn-primary fw-bold px-4" onClick={() => setCart([])}>NEW ORDER</button>
-        <button className="btn btn-secondary btn-sm">B1</button>
-        <button className="btn btn-secondary btn-sm">B2</button>
-        <button className="btn btn-secondary btn-sm">B3</button>
-        <button className="btn btn-secondary btn-sm">B4</button>
-        <div className="input-group ms-auto" style={{ maxWidth: '300px' }}>
-          <span className="input-group-text"><i className="bi bi-search"></i></span>
+      <div className="bg-white border-bottom p-2 d-flex gap-2 align-items-center shadow-sm" style={{ height: 'var(--action-height)' }}>
+        <button className="btn btn-light border shadow-sm" onClick={() => { setCategory('All'); setSearch(''); }}>
+          <i className="bi bi-house-door-fill"></i>
+        </button>
+        <button className="btn btn-primary fw-bold px-4 shadow-sm" onClick={() => { if(confirm('Clear current order?')) setCart([]); }}>
+          NEW ORDER
+        </button>
+        <div className="input-group ms-auto shadow-sm" style={{ maxWidth: '350px' }}>
+          <span className="input-group-text bg-white border-end-0"><i className="bi bi-search text-muted"></i></span>
           <input 
             type="text" 
-            className="form-control" 
-            placeholder="Search items..." 
+            className="form-control border-start-0 shadow-none" 
+            placeholder="Search for food items..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -240,34 +217,36 @@ const App: React.FC = () => {
 
       <div className="content-area">
         <div className="category-sidebar">
-          <button 
-            className={`category-btn ${category === 'All' ? 'active' : ''}`}
-            onClick={() => setCategory('All')}
-          >All</button>
           {CATEGORIES.map(cat => (
             <button 
               key={cat} 
               className={`category-btn ${category === cat ? 'active' : ''}`}
               onClick={() => setCategory(cat)}
-            >{cat}</button>
+            >
+              <i className={`bi ${getCategoryIcon(cat)}`}></i>
+              {cat}
+            </button>
           ))}
         </div>
 
         <div className="item-grid">
-          <div className="row row-cols-1 row-cols-md-3 g-4">
+          <div className="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-4 animate__animated animate__fadeIn">
             {filteredItems.map(item => (
               <div key={item.id} className="col">
-                <div className="card menu-card">
-                  {/* Using item.img from constants.ts */}
-                  <img src={(item as any).img} className="card-img-top" alt={item.name} />
+                <div className="card menu-card shadow-sm border-0">
+                  <img src={(item as any).img || (item as any).image} className="card-img-top" alt={item.name} />
                   <div className="card-body d-flex flex-column">
-                    <h6 className="card-title fw-bold mb-1">{item.name}</h6>
-                    <p className="card-text text-primary fw-bold">${item.price.toFixed(2)}</p>
+                    <h6 className="card-title fw-bold mb-1 text-truncate">{item.name}</h6>
+                    <div className="d-flex justify-content-between align-items-center mt-2 mb-3">
+                      <span className="badge bg-light text-primary border rounded-pill x-small">{item.category}</span>
+                      <span className="fw-black text-dark fs-5">£{item.price.toFixed(2)}</span>
+                    </div>
+                    {/* Add to Cart Button Restored */}
                     <button 
-                      className="btn btn-outline-primary btn-sm mt-auto"
-                      onClick={() => handleAddToCart(item)}
+                      className="btn btn-primary w-100 fw-bold btn-sm shadow-sm mt-auto py-2"
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                     >
-                      <i className="bi bi-cart-plus me-1"></i> Add to Cart
+                      <i className="bi bi-plus-circle-fill me-2"></i> ADD TO CART
                     </button>
                   </div>
                 </div>
@@ -277,29 +256,31 @@ const App: React.FC = () => {
         </div>
 
         <div className="cart-sidebar">
-          <div className="p-2 d-flex gap-1 bg-white border-bottom shadow-sm">
+          <div className="order-type-tabs">
             <button 
-              className={`btn flex-fill fw-bold btn-sm ${orderType === 'Take-away' ? 'btn-warning' : 'btn-outline-warning'}`}
-              onClick={() => setOrderType('Take-away')}
-            >Take-away</button>
-            <button 
-              className={`btn flex-fill fw-bold btn-sm ${orderType === 'Dine-in' ? 'btn-warning' : 'btn-outline-warning'}`}
+              className={`btn btn-sm shadow-sm ${orderType === 'Dine-in' ? 'btn-primary' : 'btn-outline-primary border-0'}`}
               onClick={() => setOrderType('Dine-in')}
-            >Dine-in</button>
+            >
+              <i className="bi bi-people-fill me-1"></i> DINE-IN
+            </button>
+            <button 
+              className={`btn btn-sm shadow-sm ${orderType === 'Take-away' ? 'btn-warning' : 'btn-outline-warning border-0'}`}
+              onClick={() => setOrderType('Take-away')}
+            >
+              <i className="bi bi-bag-heart-fill me-1"></i> TAKE-AWAY
+            </button>
           </div>
 
-          <div className="cart-items">
-            <div className="mb-3">
+          <div className="cart-items-container">
+            <div className="mb-3 animate__animated animate__fadeIn">
               {orderType === 'Take-away' ? (
                 <div className="row g-1">
-                  <div className="col-6"><input className="form-control form-control-sm mb-1" placeholder="First Name" value={takeaway.name} onChange={e=>setTakeaway({...takeaway, name: e.target.value})}/></div>
-                  <div className="col-6"><input className="form-control form-control-sm mb-1" placeholder="Last Name" value={takeaway.lastName} onChange={e=>setTakeaway({...takeaway, lastName: e.target.value})}/></div>
-                  <div className="col-12"><input className="form-control form-control-sm mb-1" placeholder="Address" value={takeaway.address} onChange={e=>setTakeaway({...takeaway, address: e.target.value})}/></div>
-                  <div className="col-12"><input className="form-control form-control-sm mb-2" placeholder="Phone" value={takeaway.phone} onChange={e=>setTakeaway({...takeaway, phone: e.target.value})}/></div>
-                  
-                  {/* Booking Fields for Take-away */}
-                  <div className="col-12 bg-white p-2 rounded border border-primary-subtle shadow-sm mb-1">
-                    <label className="fw-bold text-primary small mb-1"><i className="bi bi-calendar-event me-1"></i> Booking Schedule</label>
+                  <div className="col-6"><input className="form-control form-control-sm" placeholder="First Name" value={takeaway.name} onChange={e=>setTakeaway({...takeaway, name: e.target.value})}/></div>
+                  <div className="col-6"><input className="form-control form-control-sm" placeholder="Last Name" value={takeaway.lastName} onChange={e=>setTakeaway({...takeaway, lastName: e.target.value})}/></div>
+                  <div className="col-12 mt-1"><input className="form-control form-control-sm" placeholder="Contact Phone" value={takeaway.phone} onChange={e=>setTakeaway({...takeaway, phone: e.target.value})}/></div>
+                  <div className="col-12 mt-1"><input className="form-control form-control-sm" placeholder="Delivery Address" value={takeaway.address} onChange={e=>setTakeaway({...takeaway, address: e.target.value})}/></div>
+                  <div className="col-12 mt-2 bg-light p-2 rounded border border-warning-subtle shadow-sm">
+                    <label className="fw-bold text-dark x-small d-block mb-1" style={{fontSize: '10px'}}><i className="bi bi-calendar-event me-1"></i> PRE-BOOK FOR PARTY / EVENTS?</label>
                     <div className="row g-1">
                       <div className="col-6"><input type="date" className="form-control form-control-sm" value={takeaway.bookingDate} onChange={e=>setTakeaway({...takeaway, bookingDate: e.target.value})}/></div>
                       <div className="col-6"><input type="time" className="form-control form-control-sm" value={takeaway.bookingTime} onChange={e=>setTakeaway({...takeaway, bookingTime: e.target.value})}/></div>
@@ -308,143 +289,183 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div className="row g-1">
-                  <div className="col-12"><input className="form-control form-control-sm mb-1" placeholder="Customer Name" value={dineIn.customer} onChange={e=>setDineIn({...dineIn, customer: e.target.value})}/></div>
-                  <div className="col-6">
+                  <div className="col-12"><input className="form-control form-control-sm" placeholder="Customer Name" value={dineIn.customer} onChange={e=>setDineIn({...dineIn, customer: e.target.value})}/></div>
+                  <div className="col-6 mt-1">
                     <select className="form-select form-select-sm" value={dineIn.user} onChange={e=>setDineIn({...dineIn, user: e.target.value})}>
-                      <option value="user0">user0</option>
                       {USERS.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                   </div>
-                  <div className="col-6">
+                  <div className="col-6 mt-1">
                     <select className="form-select form-select-sm" value={dineIn.table} onChange={e=>setDineIn({...dineIn, table: e.target.value})}>
-                      <option value="table0">table0</option>
                       {TABLES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                  </div>
+                  {/* VIP Count for Dine-in moved here, directly below User/Table selection */}
+                  <div className="col-12 mt-2 bg-light p-2 rounded border shadow-sm d-flex justify-content-between align-items-center">
+                    <span className="fw-bold small text-primary"><i className="bi bi-gem me-1"></i> VIP Guest Count</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <button className="btn btn-outline-primary btn-sm p-0 px-2" onClick={() => setDineIn({...dineIn, vip: Math.max(0, dineIn.vip - 1)})}>-</button>
+                      <span className="fw-black">{dineIn.vip}</span>
+                      <button className="btn btn-outline-primary btn-sm p-0 px-2" onClick={() => setDineIn({...dineIn, vip: dineIn.vip + 1})}>+</button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {cart.map(item => (
-              <div key={item.id} className="bg-white p-2 rounded mb-2 shadow-sm border border-warning-subtle">
-                <div className="d-flex justify-content-between mb-1">
-                  <span className="fw-bold small">{item.name}</span>
-                  <span className="fw-bold text-success">${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-                <div className="d-flex align-items-center gap-1">
-                  <button className="btn btn-light btn-sm border" onClick={() => updateQty(item.id, -1)}>-</button>
-                  <input className="form-control form-control-sm text-center" style={{ width: '45px' }} value={item.quantity} readOnly />
-                  <button className="btn btn-light btn-sm border" onClick={() => updateQty(item.id, 1)}>+</button>
-                  <button className="btn btn-danger btn-sm ms-auto" onClick={() => removeFromCart(item.id)}><i className="bi bi-trash"></i></button>
-                </div>
+            {cart.length === 0 ? (
+              <div className="text-center py-5 opacity-50">
+                <i className="bi bi-cart-x fs-1 d-block mb-2 text-muted"></i>
+                <p className="fw-bold">No items in your basket</p>
               </div>
-            ))}
-
-            {orderType === 'Dine-in' && (
-              <div className="bg-white p-2 rounded mb-2 shadow-sm border border-warning-subtle">
-                <div className="d-flex justify-content-between align-items-center">
-                  <span className="small fw-bold">VIP Guests Count</span>
-                  <div className="d-flex align-items-center gap-2">
-                    <button className="btn btn-light btn-sm border" onClick={() => setDineIn({...dineIn, vip: Math.max(0, dineIn.vip - 1)})}>-</button>
-                    <span className="fw-bold">{dineIn.vip}</span>
-                    <button className="btn btn-light btn-sm border" onClick={() => setDineIn({...dineIn, vip: dineIn.vip + 1})}>+</button>
+            ) : (
+              cart.map(item => (
+                <div key={item.id} className="bg-white p-2 rounded border mb-2 shadow-sm animate__animated animate__fadeInRight">
+                  <div className="d-flex justify-content-between">
+                    <span className="fw-bold small text-truncate" style={{maxWidth: '180px'}}>{item.name}</span>
+                    <span className="fw-black text-success">£{(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                  <div className="d-flex align-items-center gap-1 mt-2">
+                    <button className="btn btn-outline-secondary btn-sm p-0 px-2 shadow-none" onClick={() => updateQty(item.id, -1)}>-</button>
+                    <span className="px-2 fw-bold">{item.quantity}</span>
+                    <button className="btn btn-outline-secondary btn-sm p-0 px-2 shadow-none" onClick={() => updateQty(item.id, 1)}>+</button>
+                    <button className="btn btn-link text-danger btn-sm ms-auto p-0" onClick={() => removeFromCart(item.id)}>
+                      <i className="bi bi-trash-fill"></i>
+                    </button>
                   </div>
                 </div>
-              </div>
+              ))
             )}
           </div>
 
-          <div className="p-3 bg-white border-top shadow">
-            {/* Conditional VAT/Service Inputs - Only for Dine-in */}
+          <div className="cart-summary-fixed">
             {orderType === 'Dine-in' && (
-              <div className="row g-1 mb-3 bg-light p-2 rounded border border-warning-subtle animate__animated animate__fadeIn">
+              <div className="row g-2 mb-3 bg-light p-2 rounded border animate__animated animate__fadeIn">
                 <div className="col-6">
-                  <label className="small fw-bold d-block text-center" style={{fontSize: '9px'}}>VAT (%)</label>
-                  <input type="number" className="form-control form-control-sm text-center" value={vatRate} onChange={(e) => setVatRate(Number(e.target.value))} />
+                  <label className="fw-bold d-block text-center mb-1" style={{fontSize: '9px', color: '#64748b'}}>VAT (%)</label>
+                  <input type="number" className="form-control form-control-sm text-center shadow-none" value={vatRate} onChange={(e) => setVatRate(Number(e.target.value))} />
                 </div>
                 <div className="col-6">
-                  <label className="small fw-bold d-block text-center" style={{fontSize: '9px'}}>SERVICE (%)</label>
-                  <input type="number" className="form-control form-control-sm text-center" value={serviceRate} onChange={(e) => setServiceRate(Number(e.target.value))} />
+                  <label className="fw-bold d-block text-center mb-1" style={{fontSize: '9px', color: '#64748b'}}>SERVICE (%)</label>
+                  <input type="number" className="form-control form-control-sm text-center shadow-none" value={serviceRate} onChange={(e) => setServiceRate(Number(e.target.value))} />
                 </div>
               </div>
             )}
 
-            <div className="d-flex justify-content-between small opacity-75"><span>Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
-            {orderType === 'Dine-in' && (
-              <>
-                <div className="d-flex justify-content-between small opacity-75"><span>VAT ({vatRate}%):</span><span>${vatAmount.toFixed(2)}</span></div>
-                <div className="d-flex justify-content-between small opacity-75"><span>Service ({serviceRate}%):</span><span>${serviceAmount.toFixed(2)}</span></div>
-                {vipCharge > 0 && <div className="d-flex justify-content-between small text-primary"><span>VIP Charge (${vipRate}/p):</span><span>${vipCharge.toFixed(2)}</span></div>}
-              </>
-            )}
-            <div className="d-flex justify-content-between h4 fw-black mt-2 text-dark"><span>TOTAL:</span><span>${grandTotal.toFixed(2)}</span></div>
+            <div className="px-1">
+              <div className="d-flex justify-content-between small text-muted mb-1">
+                <span>Subtotal</span>
+                <span>£{subtotal.toFixed(2)}</span>
+              </div>
+              {orderType === 'Dine-in' && (
+                <>
+                  <div className="d-flex justify-content-between small text-muted mb-1">
+                    <span>VAT ({vatRate}%)</span>
+                    <span>£{vatAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="d-flex justify-content-between small text-muted mb-1">
+                    <span>Service ({serviceRate}%)</span>
+                    <span>£{serviceAmount.toFixed(2)}</span>
+                  </div>
+                  {vipCharge > 0 && (
+                    <div className="d-flex justify-content-between small text-primary mb-1">
+                      <span>VIP Charge (£{vipRate}/p)</span>
+                      <span>£{vipCharge.toFixed(2)}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <div className="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                <span className="h5 fw-black mb-0">TOTAL</span>
+                <span className="h4 fw-black mb-0 text-primary">£{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
             
-            <div className="row g-2 mt-2">
-              <div className="col-6"><button className="btn btn-danger w-100 fw-bold py-2" onClick={() => setCart([])}>CANCEL</button></div>
-              <div className="col-6"><button className="btn btn-success w-100 fw-bold py-2" onClick={() => placeOrder()}>PLACE ORDER</button></div>
+            <div className="row g-2 mt-3">
+              <div className="col-5">
+                <button className="btn btn-outline-danger w-100 fw-bold py-2 shadow-sm" onClick={() => { if(confirm('Cancel order?')) setCart([]); }}>
+                  CANCEL
+                </button>
+              </div>
+              <div className="col-7">
+                <button className="btn btn-success w-100 fw-black py-2 shadow-sm" onClick={placeOrder}>
+                  PLACE ORDER
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="bg-success text-white px-3 py-1 d-flex justify-content-between align-items-center">
-        <div className="small fw-bold">
-          <i className="bi bi-clock me-1"></i>
-          {time.toLocaleTimeString('en-GB', { timeZone: 'Europe/London' })} London, UK
+      <footer className="bg-success text-white px-3 py-1 d-flex justify-content-between align-items-center" style={{ height: 'var(--footer-height)' }}>
+        <div className="x-small fw-bold d-flex align-items-center gap-2" style={{ fontSize: '0.75rem' }}>
+          <i className="bi bi-clock-fill"></i>
+          {time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/London' })} (London, UK)
         </div>
-        <div className="d-flex gap-2">
-          <button className="btn btn-dark btn-sm" onClick={() => handleAdminAction(() => setShowHistory(true))}>History</button>
-          <button className="btn btn-dark btn-sm" onClick={() => handleAdminAction(downloadCSV)}>Download CSV</button>
+        <div className="d-flex gap-3">
+          <button className="btn btn-link text-white p-0 text-decoration-none x-small fw-bold" onClick={() => handleAdminAction(() => setShowHistory(true))} style={{ fontSize: '0.75rem' }}>
+            <i className="bi bi-clock-history me-1"></i> HISTORY
+          </button>
+          <button className="btn btn-link text-white p-0 text-decoration-none x-small fw-bold" onClick={() => handleAdminAction(() => {})} style={{ fontSize: '0.75rem' }}>
+            <i className="bi bi-file-earmark-spreadsheet me-1"></i> EXPORT
+          </button>
         </div>
       </footer>
-      <div className="bg-light text-center py-1 border-top" style={{ fontSize: '10px' }}>
-        QuickBite POS System © 2024. Support: {COMPANY_EMAIL}
-      </div>
 
-      {showHistory && (
+      {showAppSelector && (
         <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex align-items-center justify-content-center z-3">
-          <div className="bg-white rounded p-4 w-75 h-75 overflow-auto shadow-lg">
-            <div className="d-flex justify-content-between mb-3 border-bottom pb-2">
-              <h5 className="fw-bold">Order History (Last 10k)</h5>
-              <button className="btn-close" onClick={() => setShowHistory(false)}></button>
+          <div className="bg-white rounded-4 shadow-lg p-4 w-auto text-center animate__animated animate__zoomIn" style={{ minWidth: '380px' }}>
+            <div className="mb-3 text-primary"><i className="bi bi-send-fill fs-1"></i></div>
+            <h5 className="fw-black mb-4">SHARE TICKET</h5>
+            <div className="d-grid gap-2">
+              <button className="btn btn-success py-3 d-flex align-items-center justify-content-center gap-3 fw-bold shadow-sm" onClick={() => handleShare('wa')}>
+                <i className="bi bi-whatsapp fs-3"></i> WHATSAPP
+              </button>
+              <button className="btn btn-primary py-3 d-flex align-items-center justify-content-center gap-3 fw-bold shadow-sm" onClick={() => handleShare('tg')}>
+                <i className="bi bi-telegram fs-3"></i> TELEGRAM
+              </button>
+              <button className="btn btn-info text-white py-3 d-flex align-items-center justify-content-center gap-3 fw-bold shadow-sm" onClick={() => handleShare('vb')}>
+                <i className="bi bi-chat-dots-fill fs-3"></i> VIBER
+              </button>
+              <button className="btn btn-dark py-3 d-flex align-items-center justify-content-center gap-3 fw-bold shadow-sm" onClick={() => handleShare('email')}>
+                <i className="bi bi-envelope-at fs-3"></i> EMAIL
+              </button>
             </div>
-            <table className="table table-sm table-striped small">
-              <thead className="table-dark">
-                <tr><th>ID</th><th>Date</th><th>Time</th><th>Type</th><th>Total</th></tr>
-              </thead>
-              <tbody>
-                {history.map(h => (
-                  <tr key={h.id}><td>{h.id}</td><td>{h.date}</td><td>{h.time}</td><td>{h.type}</td><td>${h.total.toFixed(2)}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <hr className="my-4" />
+            <button className="btn btn-outline-secondary w-100 fw-bold border-0" onClick={() => setShowAppSelector(false)}>
+              SKIP
+            </button>
           </div>
         </div>
       )}
 
-      {showAppSelector && (
+      {showHistory && (
         <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-85 d-flex align-items-center justify-content-center z-3">
-          <div className="bg-white rounded-4 shadow-2xl p-4 w-auto text-center animate__animated animate__zoomIn" style={{ minWidth: '350px' }}>
-            <h5 className="fw-bold mb-3 text-primary">SELECT SENDING METHOD</h5>
-            <p className="small text-muted mb-4">Sharing ticket to our restaurant channels</p>
-            <div className="d-grid gap-2">
-              <button className="btn btn-success py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('wa')}>
-                <i className="bi bi-whatsapp fs-4"></i> WhatsApp
-              </button>
-              <button className="btn btn-primary py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('tg')}>
-                <i className="bi bi-telegram fs-4"></i> Telegram
-              </button>
-              <button className="btn btn-info text-white py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('vb')}>
-                <i className="bi bi-chat-dots-fill fs-4"></i> Viber
-              </button>
-              <button className="btn btn-dark py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('email')}>
-                <i className="bi bi-envelope-at fs-4"></i> Email (Gmail)
-              </button>
+          <div className="bg-white rounded-4 p-4 w-75 h-75 overflow-hidden d-flex flex-column shadow-2xl animate__animated animate__fadeInUp">
+            <div className="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <h5 className="fw-black"><i className="bi bi-journal-text me-2"></i>History Registry (London)</h5>
+              <button className="btn-close" onClick={() => setShowHistory(false)}></button>
             </div>
-            <hr className="my-4" />
-            <button className="btn btn-outline-secondary w-100 fw-bold" onClick={() => setShowAppSelector(false)}>
-              CANCEL
-            </button>
+            <div className="overflow-auto flex-fill">
+              <table className="table table-hover table-striped small align-middle">
+                <thead className="table-primary position-sticky top-0">
+                  <tr><th>ID</th><th>DATE</th><th>TIME</th><th>TYPE</th><th>TOTAL</th><th>PRINTER</th></tr>
+                </thead>
+                <tbody>
+                  {history.map(h => (
+                    <tr key={h.id}>
+                      <td className="fw-bold text-muted">#{h.id.toString().slice(-6)}</td>
+                      <td>{h.date}</td>
+                      <td>{h.time}</td>
+                      <td><span className={`badge ${h.type === 'Dine-in' ? 'bg-primary' : 'bg-warning text-dark'}`}>{h.type}</span></td>
+                      <td className="fw-black text-success">£{h.total.toFixed(2)}</td>
+                      <td><button className="btn btn-sm btn-outline-dark p-1 px-2 border-0"><i className="bi bi-printer-fill"></i></button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
