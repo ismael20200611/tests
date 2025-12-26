@@ -22,3 +22,4 @@ export const MENU_ITEMS = [
 export const TABLES = Array.from({ length: 30 }, (_, i) => `T${i + 1}`);
 export const USERS = ['user1', 'user2', 'user3', 'admin'];
 export const CONTACT_NUMBER = '+9647501235678';
+export const COMPANY_EMAIL = 'fastfood@gmail.com';

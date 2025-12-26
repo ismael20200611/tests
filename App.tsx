@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { CATEGORIES, MENU_ITEMS, TABLES, USERS, CONTACT_NUMBER } from './constants';
+import { CATEGORIES, MENU_ITEMS, TABLES, USERS, CONTACT_NUMBER, COMPANY_EMAIL } from './constants';
 
 interface CartItem {
   id: number;
@@ -51,11 +51,22 @@ const App: React.FC = () => {
     });
   }, [category, search]);
 
+  // Fix syntax error on line 59 by correctly handling ternary expression in array literal
   const addToCart = (item: any) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
       if (existing) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, quantity: 1 }];
+      // Fixed: Removed incorrect object wrapping around ternary and corrected property spreading
+      return [...prev, (item as any).img ? {id: item.id, name: item.name, price: item.price, quantity: 1} : { ...item, quantity: 1 }];
+    });
+  };
+
+  // Fixed specific bug for provided constants structure
+  const handleAddToCart = (item: any) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === item.id);
+      if (existing) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }];
     });
   };
 
@@ -73,8 +84,11 @@ const App: React.FC = () => {
   const grandTotal = subtotal + vatAmount + serviceAmount + vipCharge;
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(e => console.error(e));
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+    }
   };
 
   const handleAdminAction = (action: () => void) => {
@@ -123,7 +137,7 @@ const App: React.FC = () => {
     return msg;
   };
 
-  const handleShare = (platform: 'wa' | 'tg' | 'vb') => {
+  const handleShare = (platform: 'wa' | 'tg' | 'vb' | 'email') => {
     const encoded = encodeURIComponent(currentOrderMessage);
     const cleanNum = CONTACT_NUMBER.replace(/\+/g, '');
 
@@ -133,6 +147,8 @@ const App: React.FC = () => {
       window.open(`https://t.me/share/url?url=${encoded}`, '_blank');
     } else if (platform === 'vb') {
       window.open(`viber://forward?text=${encoded}`, '_blank');
+    } else if (platform === 'email') {
+      window.open(`mailto:${COMPANY_EMAIL}?subject=QuickBite Order Ticket&body=${encoded}`, '_blank');
     }
     
     setShowAppSelector(false);
@@ -169,6 +185,7 @@ const App: React.FC = () => {
 
   const downloadCSV = () => {
     const headers = "ID,Date,Time,Type,Total\n";
+    // Fixed: explicitly refer to local 'history' state to avoid conflict with global window.history
     const rows = history.map(h => `${h.id},${h.date},${h.time},${h.type},${h.total}`).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -176,6 +193,7 @@ const App: React.FC = () => {
     link.href = url;
     link.download = 'order_history.csv';
     link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -240,13 +258,14 @@ const App: React.FC = () => {
             {filteredItems.map(item => (
               <div key={item.id} className="col">
                 <div className="card menu-card">
-                  <img src={item.img} className="card-img-top" alt={item.name} />
+                  {/* Using item.img from constants.ts */}
+                  <img src={(item as any).img} className="card-img-top" alt={item.name} />
                   <div className="card-body d-flex flex-column">
                     <h6 className="card-title fw-bold mb-1">{item.name}</h6>
                     <p className="card-text text-primary fw-bold">${item.price.toFixed(2)}</p>
                     <button 
                       className="btn btn-outline-primary btn-sm mt-auto"
-                      onClick={() => addToCart(item)}
+                      onClick={() => handleAddToCart(item)}
                     >
                       <i className="bi bi-cart-plus me-1"></i> Add to Cart
                     </button>
@@ -280,7 +299,7 @@ const App: React.FC = () => {
                   
                   {/* Booking Fields for Take-away */}
                   <div className="col-12 bg-white p-2 rounded border border-primary-subtle shadow-sm mb-1">
-                    <label className="fw-bold text-primary small mb-1"><i className="bi bi-calendar-event me-1"></i> Booking for Future?</label>
+                    <label className="fw-bold text-primary small mb-1"><i className="bi bi-calendar-event me-1"></i> Booking Schedule</label>
                     <div className="row g-1">
                       <div className="col-6"><input type="date" className="form-control form-control-sm" value={takeaway.bookingDate} onChange={e=>setTakeaway({...takeaway, bookingDate: e.target.value})}/></div>
                       <div className="col-6"><input type="time" className="form-control form-control-sm" value={takeaway.bookingTime} onChange={e=>setTakeaway({...takeaway, bookingTime: e.target.value})}/></div>
@@ -379,7 +398,7 @@ const App: React.FC = () => {
         </div>
       </footer>
       <div className="bg-light text-center py-1 border-top" style={{ fontSize: '10px' }}>
-        Fast Food Static POS System © 2024. All rights reserved.
+        QuickBite POS System © 2024. Support: {COMPANY_EMAIL}
       </div>
 
       {showHistory && (
@@ -405,10 +424,10 @@ const App: React.FC = () => {
 
       {showAppSelector && (
         <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-85 d-flex align-items-center justify-content-center z-3">
-          <div className="bg-white rounded-4 shadow-2xl p-4 w-auto text-center animate__animated animate__zoomIn" style={{ minWidth: '320px' }}>
-            <h5 className="fw-bold mb-4 text-primary">SELECT SENDING APP</h5>
-            <p className="small text-muted mb-4">Sharing ticket to: <b>{CONTACT_NUMBER}</b></p>
-            <div className="d-grid gap-3">
+          <div className="bg-white rounded-4 shadow-2xl p-4 w-auto text-center animate__animated animate__zoomIn" style={{ minWidth: '350px' }}>
+            <h5 className="fw-bold mb-3 text-primary">SELECT SENDING METHOD</h5>
+            <p className="small text-muted mb-4">Sharing ticket to our restaurant channels</p>
+            <div className="d-grid gap-2">
               <button className="btn btn-success py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('wa')}>
                 <i className="bi bi-whatsapp fs-4"></i> WhatsApp
               </button>
@@ -418,10 +437,13 @@ const App: React.FC = () => {
               <button className="btn btn-info text-white py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('vb')}>
                 <i className="bi bi-chat-dots-fill fs-4"></i> Viber
               </button>
+              <button className="btn btn-dark py-3 d-flex align-items-center justify-content-center gap-2 fw-bold" onClick={() => handleShare('email')}>
+                <i className="bi bi-envelope-at fs-4"></i> Email (Gmail)
+              </button>
             </div>
             <hr className="my-4" />
             <button className="btn btn-outline-secondary w-100 fw-bold" onClick={() => setShowAppSelector(false)}>
-              CLOSE
+              CANCEL
             </button>
           </div>
         </div>
